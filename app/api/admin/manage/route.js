@@ -40,8 +40,13 @@ export async function POST(request) {
     }
 
     if (action === 'listTeams') {
-      const teams = await Team.find({}).sort({ score: -1, updatedAt: 1 }).lean();
-      return NextResponse.json({ teams });
+      const [teams, totalCheckpoints] = await Promise.all([
+        Team.find({}).sort({ score: -1, updatedAt: 1 }).lean(),
+        Checkpoint.countDocuments({}),
+      ]);
+      return NextResponse.json({
+        teams: teams.map((team) => ({ ...team, totalCheckpoints, progressPercent: totalCheckpoints ? Math.min(100, Math.round(((team.completedCheckpoints || []).length / totalCheckpoints) * 100)) : 0 })),
+      });
     }
 
     if (action === 'listCheckpoints') {
@@ -150,8 +155,11 @@ export async function POST(request) {
     }
 
     if (action === 'leaderboard') {
-      const teams = await Team.find({}).sort({ score: -1, updatedAt: 1 }).lean();
-      return NextResponse.json({ teams: teams.map(publicLeaderboardTeam) });
+      const [teams, totalCheckpoints] = await Promise.all([
+        Team.find({}).sort({ score: -1, updatedAt: 1 }).lean(),
+        Checkpoint.countDocuments({}),
+      ]);
+      return NextResponse.json({ teams: teams.map((team) => publicLeaderboardTeam(team, totalCheckpoints)) });
     }
 
     return NextResponse.json({ error: 'Unknown admin action.' }, { status: 400 });

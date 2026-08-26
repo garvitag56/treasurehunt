@@ -14,8 +14,8 @@ export async function POST(request) {
       .toUpperCase();
     const type = String(lifelineType || '').toUpperCase();
 
-    if (!['HINT', 'SKIP'].includes(type)) {
-      return NextResponse.json({ error: 'Unknown lifeline.' }, { status: 400 });
+    if (!['HINT'].includes(type)) {
+      return NextResponse.json({ error: 'Only hints are available.' }, { status: 400 });
     }
 
     const team = await Team.findOne({ accessCode: code });
@@ -41,35 +41,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No remaining checkpoints for a lifeline.' }, { status: 400 });
     }
 
-    if (type === 'HINT') {
-      const alreadyHinted = (team.usedLifelines || []).some(
-        (item) => item.lifelineType === 'HINT' && String(item.checkpointId) === String(nextCheckpoint._id)
+    const alreadyHinted = (team.usedLifelines || []).some(
+      (item) => item.lifelineType === 'HINT' && String(item.checkpointId) === String(nextCheckpoint._id)
+    );
+    if (alreadyHinted) {
+      return NextResponse.json(
+        { error: 'Your team already used a hint for this checkpoint.', bonusHint: nextCheckpoint.bonusHint },
+        { status: 409 }
       );
-      if (alreadyHinted) {
-        return NextResponse.json(
-          { error: 'Your team already used a hint for this checkpoint.', bonusHint: nextCheckpoint.bonusHint },
-          { status: 409 }
-        );
-      }
-    }
-
-    const update = {
-      $inc: { score: -cost },
-      $push: {
-        usedLifelines: {
-          lifelineType: type,
-          cost,
-          usedAt: new Date(),
-          checkpointId: nextCheckpoint._id,
-        },
-      },
-    };
-
-    if (type === 'SKIP') {
-      update.$push.completedCheckpoints = {
-        checkpointId: nextCheckpoint._id,
-        unlockedAt: new Date(),
-      };
     }
 
     const updatedTeam = await Team.findOneAndUpdate(
@@ -77,7 +56,17 @@ export async function POST(request) {
         _id: team._id,
         score: { $gte: cost + MIN_POINTS_THRESHOLD },
       },
-      update,
+      {
+        $inc: { score: -cost },
+        $push: {
+          usedLifelines: {
+            lifelineType: type,
+            cost,
+            usedAt: new Date(),
+            checkpointId: nextCheckpoint._id,
+          },
+        },
+      },
       { new: true }
     );
 
@@ -105,8 +94,7 @@ export async function POST(request) {
       success: true,
       lifelineType: type,
       cost,
-      bonusHint: type === 'HINT' ? nextCheckpoint.bonusHint || 'Look for staff in bright volunteer tees nearby.' : null,
-      skippedTitle: type === 'SKIP' ? nextCheckpoint.title : null,
+      bonusHint: nextCheckpoint.bonusHint || 'Look for staff in bright volunteer tees nearby.',
       ...progress,
     });
   } catch (error) {

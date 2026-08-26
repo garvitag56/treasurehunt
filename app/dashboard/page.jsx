@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
-import { Camera, Lightbulb, FastForward, Lock, Trophy, LogOut, Map } from 'lucide-react';
+import { Camera, Lightbulb, Lock, Trophy, LogOut, Map } from 'lucide-react';
 import QRScannerModal from '@/components/QRScannerModal';
 import LifelineModal from '@/components/LifelineModal';
 import useSocket from '@/hooks/useSocket';
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setProgress(data);
-      setMessage(data.bonusHint || `Skipped ${data.skippedTitle}. Keep moving!`);
+      setMessage(data.bonusHint || 'Hint used. Keep moving!');
       setLifeline(null);
     } catch (err) {
       setError(err.message);
@@ -207,7 +207,7 @@ export default function DashboardPage() {
       {message && <p className="mb-3 rounded-2xl bg-emerald-500/15 px-4 py-3 text-sm text-emerald-200">{message}</p>}
       {error && <p className="mb-3 rounded-2xl bg-rose-500/15 px-4 py-3 text-sm text-rose-200">{error}</p>}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <button
           type="button"
           onClick={() => setLifeline('HINT')}
@@ -216,15 +216,6 @@ export default function DashboardPage() {
           <Lightbulb className="mb-2 h-5 w-5 text-amber-300" />
           <p className="font-bold text-white">Hint</p>
           <p className="text-xs text-slate-400">-{progress.lifelineCosts.HINT} pts</p>
-        </button>
-        <button
-          type="button"
-          onClick={() => setLifeline('SKIP')}
-          className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left"
-        >
-          <FastForward className="mb-2 h-5 w-5 text-amber-300" />
-          <p className="font-bold text-white">Skip</p>
-          <p className="text-xs text-slate-400">-{progress.lifelineCosts.SKIP} pts</p>
         </button>
       </div>
 

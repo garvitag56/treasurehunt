@@ -26,8 +26,18 @@ export default function LeaderboardPage() {
     (updatedTeam) => {
       setFlashId(updatedTeam._id);
       setTeams((current) => {
+        const existing = current.find((team) => team._id === updatedTeam._id);
+        const mergedTeam = {
+          ...updatedTeam,
+          totalCheckpoints: updatedTeam.totalCheckpoints || existing?.totalCheckpoints || updatedTeam.completedCount || 1,
+          progressPercent:
+            updatedTeam.progressPercent ??
+            (updatedTeam.totalCheckpoints
+              ? Math.min(100, Math.round((updatedTeam.completedCount / updatedTeam.totalCheckpoints) * 100))
+              : existing?.progressPercent ?? 0),
+        };
         const next = current.filter((team) => team._id !== updatedTeam._id);
-        next.push(updatedTeam);
+        next.push(mergedTeam);
         return sortTeams(next);
       });
       setTimeout(() => setFlashId(null), 1200);
