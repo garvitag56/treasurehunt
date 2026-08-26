@@ -1,7 +1,7 @@
 import AdminDashboard from '@/components/AdminDashboard';
 
 export const metadata = {
-  title: 'Admin | Induction Treasure Hunt',
+  title: 'Admin | NIELIT Treasure Hunt',
 };
 
 export default function AdminPage() {

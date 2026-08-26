@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, KeyRound } from 'lucide-react';
+import { KeyRound, Shield } from 'lucide-react';
 
 const SESSION_KEY = 'th_team_session';
 
@@ -48,10 +49,10 @@ export default function LoginPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-glow">
-          <Compass className="h-8 w-8" />
+        <div className="mx-auto mb-4 flex w-full max-w-sm items-center justify-center">
+          <img src="/NIELIT_Logo.png" alt="NIELIT logo" className="h-auto w-full object-contain" />
         </div>
-        <p className="text-xs uppercase tracking-[0.3em] text-amber-300">College induction</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-amber-300">NIELIT</p>
         <h1 className="mt-2 text-4xl font-black text-white">Treasure Hunt</h1>
         <p className="mt-3 text-slate-400">Enter your team’s 6-character access code to start.</p>
         <div className="mt-5 overflow-hidden rounded-2xl border border-amber-300/20">
@@ -83,6 +84,16 @@ export default function LoginPage() {
           {loading ? 'Checking…' : 'Enter hunt'}
         </button>
       </form>
+
+      <div className="mt-4">
+        <Link
+          href="/admin"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-200"
+        >
+          <Shield className="h-4 w-4 text-amber-300" />
+          Admin access
+        </Link>
+      </div>
     </main>
   );
 }

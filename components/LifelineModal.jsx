@@ -15,7 +15,6 @@ export default function LifelineModal({
   if (!open) return null;
 
   const remaining = score - cost;
-  const blocked = remaining < threshold;
   const isHint = type === 'HINT';
 
   return (
@@ -36,19 +35,10 @@ export default function LifelineModal({
             <Lightbulb className="mt-0.5 h-5 w-5" />
             <p className="text-sm leading-6">
               This costs <span className="font-bold">{cost} points</span>. Your score would become{' '}
-              <span className="font-bold">{remaining}</span>. Teams cannot drop below {threshold} points.
+              <span className="font-bold">{remaining}</span>.
             </p>
           </div>
         </div>
-
-        {blocked && (
-          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-rose-100">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-            <p className="text-sm">
-              Blocked: using this lifeline would put you under the {threshold}-point threshold needed for the final clue.
-            </p>
-          </div>
-        )}
 
         <div className="flex gap-3">
           <button
@@ -60,7 +50,7 @@ export default function LifelineModal({
           </button>
           <button
             type="button"
-            disabled={blocked || loading}
+            disabled={loading}
             onClick={onConfirm}
             className="flex-1 rounded-2xl bg-amber-400 py-3 font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
           >

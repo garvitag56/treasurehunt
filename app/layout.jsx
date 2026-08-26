@@ -9,7 +9,7 @@ export const viewport = {
 
 export const metadata = {
   title: 'Treasure Hunt',
-  description: 'Real-time campus treasure hunt for college induction',
+  description: 'Real-time campus treasure hunt for NIELIT Students',
 };
 
 export default function RootLayout({ children }) {

@@ -24,17 +24,6 @@ export async function POST(request) {
     }
 
     const cost = getLifelineCost(type);
-    const { MIN_POINTS_THRESHOLD } = getGameConfig();
-
-    if (team.score - cost < MIN_POINTS_THRESHOLD) {
-      return NextResponse.json(
-        {
-          error: `Lifeline blocked. Score would drop below the ${MIN_POINTS_THRESHOLD}-point threshold.`,
-          blocked: true,
-        },
-        { status: 403 }
-      );
-    }
 
     const nextCheckpoint = await findNextCheckpoint(team);
     if (!nextCheckpoint) {
@@ -54,7 +43,6 @@ export async function POST(request) {
     const updatedTeam = await Team.findOneAndUpdate(
       {
         _id: team._id,
-        score: { $gte: cost + MIN_POINTS_THRESHOLD },
       },
       {
         $inc: { score: -cost },
@@ -70,16 +58,6 @@ export async function POST(request) {
       { new: true }
     );
 
-    if (!updatedTeam) {
-      return NextResponse.json(
-        {
-          error: `Lifeline blocked. Score would drop below the ${MIN_POINTS_THRESHOLD}-point threshold.`,
-          blocked: true,
-        },
-        { status: 403 }
-      );
-    }
-
     await ScanLog.create({
       teamId: updatedTeam._id,
       type: 'LIFELINE_USED',
@@ -94,7 +72,6 @@ export async function POST(request) {
       success: true,
       lifelineType: type,
       cost,
-      bonusHint: nextCheckpoint.bonusHint || 'Look for staff in bright volunteer tees nearby.',
       ...progress,
     });
   } catch (error) {

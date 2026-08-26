@@ -28,6 +28,19 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unknown QR code. Try scanning again.' }, { status: 404 });
     }
 
+    const checkpoints = await Checkpoint.find({}).sort({ sequenceOrder: 1 }).lean();
+    const completedIds = new Set((team.completedCheckpoints || []).map((item) => String(item.checkpointId)));
+    const allComplete = checkpoints.length > 0 && completedIds.size >= checkpoints.length;
+    const meetsThreshold = (team.score || 0) >= Number(process.env.MIN_POINTS_THRESHOLD || 50);
+    const isFinalCheckpoint = !allComplete && checkpoint.sequenceOrder === Math.max(...checkpoints.map((item) => item.sequenceOrder));
+
+    if (isFinalCheckpoint && !meetsThreshold) {
+      return NextResponse.json(
+        { error: 'You must keep enough points to unlock the final clue before completing the final checkpoint.', blocked: true },
+        { status: 403 }
+      );
+    }
+
     const updatedTeam = await Team.findOneAndUpdate(
       {
         _id: team._id,

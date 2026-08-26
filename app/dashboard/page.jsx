@@ -100,7 +100,7 @@ export default function DashboardPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setProgress(data);
-      setMessage(data.bonusHint || 'Hint used. Keep moving!');
+      setMessage('Hint used. Keep moving!');
       setLifeline(null);
     } catch (err) {
       setError(err.message);
@@ -113,9 +113,12 @@ export default function DashboardPage() {
     return <main className="flex min-h-screen items-center justify-center text-slate-400">Loading hunt…</main>;
   }
 
-  const percent = progress.totalCheckpoints
-    ? Math.round((progress.completedCount / progress.totalCheckpoints) * 100)
-    : 0;
+  const percent =
+    progress.totalCheckpoints > 0 && progress.completedCount >= progress.totalCheckpoints
+      ? 100
+      : progress.totalCheckpoints
+        ? Math.min(99, Math.round((progress.completedCount / progress.totalCheckpoints) * 100))
+        : 0;
 
   return (
     <main className="mx-auto min-h-screen max-w-lg px-4 pb-32 pt-6">
@@ -182,23 +185,23 @@ export default function DashboardPage() {
       </section>
 
       <section className="mb-5 rounded-3xl border border-amber-300/20 bg-slate-900 p-5">
-        <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Next destination</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Status</p>
         {progress.finalUnlocked ? (
           <div className="mt-3">
-            <h2 className="text-xl font-bold text-white">Final clue unlocked</h2>
-            <p className="mt-2 leading-7 text-slate-200">{progress.finalClue}</p>
+            <h2 className="text-xl font-bold text-white">Final step unlocked</h2>
+            <p className="mt-2 leading-7 text-slate-200">Complete your final check with the volunteer when ready.</p>
           </div>
         ) : progress.nextCheckpoint ? (
           <div className="mt-3">
-            <h2 className="text-xl font-bold text-white">{progress.nextCheckpoint.title}</h2>
-            <p className="mt-2 leading-7 text-slate-200">{progress.nextCheckpoint.clueText}</p>
+            <h2 className="text-xl font-bold text-white">Keep moving</h2>
+            <p className="mt-2 leading-7 text-slate-200">Your next checkpoint will be given by the volunteer on site.</p>
           </div>
         ) : (
           <div className="mt-3 flex items-start gap-3 text-slate-200">
             <Lock className="mt-1 h-5 w-5 text-amber-300" />
             <div>
-              <h2 className="text-xl font-bold text-white">Final destination locked</h2>
-              <p className="mt-2 leading-7">{progress.lockReason}</p>
+              <h2 className="text-xl font-bold text-white">Final clue locked</h2>
+              <p className="mt-2 leading-7">{progress.lockReason || 'Finish all checkpoints and keep enough points to unlock the final clue.'}</p>
             </div>
           </div>
         )}
