@@ -1,0 +1,51 @@
+/*@tailwind base;
+@tailwind components;
+@tailwind utilities;
+*/
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+:root {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(251, 191, 36, 0.12), transparent 32%),
+    linear-gradient(180deg, #070b14 0%, #0b1220 55%, #05070d 100%);
+  color: #e2e8f0;
+}
+
+@keyframes flash-row {
+  0% { background-color: rgba(251, 191, 36, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.animate-flash {
+  animation: flash-row 1.2s ease-out;
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e2e8f0 !important;
+    margin-bottom: 16px;
+  }
+
+  .print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+}
