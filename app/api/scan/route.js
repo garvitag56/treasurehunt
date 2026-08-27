@@ -30,13 +30,19 @@ export async function POST(request) {
 
     const checkpoints = await Checkpoint.find({}).sort({ sequenceOrder: 1 }).lean();
     const completedIds = new Set((team.completedCheckpoints || []).map((item) => String(item.checkpointId)));
-    const allComplete = checkpoints.length > 0 && completedIds.size >= checkpoints.length;
-    const meetsThreshold = (team.score || 0) >= Number(process.env.MIN_POINTS_THRESHOLD || 50);
-    const isFinalCheckpoint = !allComplete && checkpoint.sequenceOrder === Math.max(...checkpoints.map((item) => item.sequenceOrder));
-
-    if (isFinalCheckpoint && !meetsThreshold) {
+    const nextCheckpoint = checkpoints.find((item) => !completedIds.has(String(item._id)));
+    if (!nextCheckpoint || String(nextCheckpoint._id) !== String(checkpoint._id)) {
       return NextResponse.json(
-        { error: 'You must keep enough points to unlock the final clue before completing the final checkpoint.', blocked: true },
+        { error: `Scan checkpoint ${nextCheckpoint?.sequenceOrder || 'in sequence'} first.`, outOfSequence: true },
+        { status: 409 }
+      );
+    }
+    const meetsThreshold = (team.score || 0) >= Number(process.env.MIN_POINTS_THRESHOLD || 50);
+    const isFinalCheckpoint = checkpoint.sequenceOrder === Math.max(...checkpoints.map((item) => item.sequenceOrder));
+
+    if (isFinalCheckpoint && (!team.finalTreasureUnlocked || !meetsThreshold)) {
+      return NextResponse.json(
+        { error: 'Unlock the final treasure with the password before scanning the final checkpoint.', blocked: true },
         { status: 403 }
       );
     }
@@ -51,6 +57,7 @@ export async function POST(request) {
         $push: {
           completedCheckpoints: {
             checkpointId: checkpoint._id,
+            unlockLetter: isFinalCheckpoint ? '' : checkpoint.unlockLetter,
             unlockedAt: new Date(),
           },
         },

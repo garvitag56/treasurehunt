@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
-import { Camera, Lightbulb, Lock, Trophy, LogOut, Map } from 'lucide-react';
+import { Camera, KeyRound, Lightbulb, Lock, Trophy, LogOut, Map, Sparkles } from 'lucide-react';
 import QRScannerModal from '@/components/QRScannerModal';
 import LifelineModal from '@/components/LifelineModal';
 import useSocket from '@/hooks/useSocket';
@@ -20,12 +20,18 @@ export default function DashboardPage() {
   const [lifeline, setLifeline] = useState(null);
   const [lifelineLoading, setLifelineLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [finalPassword, setFinalPassword] = useState('');
+  const [finalRiddle, setFinalRiddle] = useState('');
+  const [finalUnlocked, setFinalUnlocked] = useState(false);
+  const [unlockingFinal, setUnlockingFinal] = useState(false);
 
   const loadProgress = useCallback(async (accessCode) => {
     const response = await fetch(`/api/progress?accessCode=${encodeURIComponent(accessCode)}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     setProgress(data);
+    setFinalUnlocked(Boolean(data.finalUnlocked));
+    setFinalRiddle(data.finalClue || '');
   }, []);
 
   useEffect(() => {
@@ -109,6 +115,29 @@ export default function DashboardPage() {
     }
   }
 
+  async function unlockFinalTreasure(event) {
+    event.preventDefault();
+    setUnlockingFinal(true);
+    setError('');
+    try {
+      const response = await fetch('/api/final-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessCode: session.accessCode, password: finalPassword }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setFinalRiddle(data.finalRiddle);
+      setFinalUnlocked(true);
+      setMessage('Quest complete. Final treasure unlocked!');
+      confetti({ particleCount: 220, spread: 100, origin: { y: 0.55 } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUnlockingFinal(false);
+    }
+  }
+
   if (!progress) {
     return <main className="flex min-h-screen items-center justify-center text-slate-400">Loading hunt…</main>;
   }
@@ -186,10 +215,31 @@ export default function DashboardPage() {
 
       <section className="mb-5 rounded-3xl border border-amber-300/20 bg-slate-900 p-5">
         <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Status</p>
-        {progress.finalUnlocked ? (
+        {finalUnlocked ? (
           <div className="mt-3">
-            <h2 className="text-xl font-bold text-white">Final step unlocked</h2>
-            <p className="mt-2 leading-7 text-slate-200">Complete your final check with the volunteer when ready.</p>
+            <div className="flex items-center gap-2 text-amber-300">
+              <Sparkles className="h-5 w-5 animate-pulse" />
+              <h2 className="text-xl font-bold text-white">Final treasure unlocked!</h2>
+            </div>
+            <p className="mt-2 leading-7 text-slate-200">{finalRiddle}</p>
+          </div>
+        ) : progress.finalEligible ? (
+          <div className="mt-3">
+            <h2 className="text-xl font-bold text-white">Enter the final password</h2>
+            <p className="mt-2 leading-7 text-slate-200">Enter your seven-word password to reveal the final riddle.</p>
+            <form onSubmit={unlockFinalTreasure} className="mt-4 flex gap-2">
+              <label className="sr-only" htmlFor="final-password">Final password</label>
+              <input
+                id="final-password"
+                value={finalPassword}
+                onChange={(event) => setFinalPassword(event.target.value)}
+                placeholder="Seven-word password"
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
+              />
+              <button type="submit" disabled={unlockingFinal || !finalPassword.trim()} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2 font-bold text-slate-950 disabled:opacity-50">
+                <KeyRound className="h-4 w-4" /> {unlockingFinal ? 'Checking...' : 'Unlock'}
+              </button>
+            </form>
           </div>
         ) : progress.nextCheckpoint ? (
           <div className="mt-3">
@@ -206,6 +256,17 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
+
+      {progress.collectedLetters?.length > 0 && (
+        <section className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5">
+          <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Letters from volunteers</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {progress.collectedLetters.map((letter, index) => (
+              <span key={`${letter}-${index}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-lg font-black text-slate-950">{letter}</span>
+            ))}
+          </div>
+        </section>
+      )}
 
       {message && <p className="mb-3 rounded-2xl bg-emerald-500/15 px-4 py-3 text-sm text-emerald-200">{message}</p>}
       {error && <p className="mb-3 rounded-2xl bg-rose-500/15 px-4 py-3 text-sm text-rose-200">{error}</p>}

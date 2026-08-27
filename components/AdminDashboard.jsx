@@ -45,6 +45,9 @@ export default function AdminDashboard() {
   const [teamName, setTeamName] = useState('');
   const [creating, setCreating] = useState(false);
   const [creatingCp, setCreatingCp] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settings, setSettings] = useState({ finalPassword: '', finalRiddle: '' });
+  const [isFinalCheckpoint, setIsFinalCheckpoint] = useState(false);
   const [checkpointForm, setCheckpointForm] = useState({
     title: '',
     sequenceOrder: 1,
@@ -88,8 +91,24 @@ export default function AdminDashboard() {
       adminRequest(key, { action: 'listTeams' }),
       adminRequest(key, { action: 'listCheckpoints' }),
     ]);
+    const settingsRes = await adminRequest(key, { action: 'getSettings' });
     setTeams(teamRes.teams || []);
     setCheckpoints(checkpointRes.checkpoints || []);
+    setSettings(settingsRes.settings || { finalPassword: '', finalRiddle: '' });
+  }
+
+  async function saveSettings(event) {
+    event.preventDefault();
+    setError('');
+    setSavingSettings(true);
+    try {
+      const response = await adminRequest(passkey, { action: 'saveSettings', ...settings });
+      setSettings(response.settings);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   async function createTeam(event) {
@@ -112,12 +131,13 @@ export default function AdminDashboard() {
     setError('');
     setCreatingCp(true);
     try {
-      await adminRequest(passkey, { action: 'createCheckpoint', ...checkpointForm });
+      await adminRequest(passkey, { action: 'createCheckpoint', ...checkpointForm, isFinalCheckpoint });
       setCheckpointForm((current) => ({
         ...current,
         title: '',
         sequenceOrder: Number(current.sequenceOrder) + 1,
       }));
+      setIsFinalCheckpoint(false);
       await refresh();
     } catch (err) {
       setError(err.message);
@@ -318,9 +338,11 @@ export default function AdminDashboard() {
 
           <div className="space-y-3">
             {rankedTeams.map((team, index) => {
-              const progress = team.progressPercent ?? (
-                team.totalCheckpoints ? Math.min(100, Math.round(((team.completedCheckpoints?.length || 0) / team.totalCheckpoints) * 100)) : 0
-              );
+              const completedCount = team.completedCount ?? team.completedCheckpoints?.length ?? 0;
+              const totalCheckpoints = team.totalCheckpoints || 0;
+              const progress = totalCheckpoints
+                ? Math.min(100, Math.round((completedCount / totalCheckpoints) * 100))
+                : 0;
               const medals = ['🥇', '🥈', '🥉'];
 
               return (
@@ -330,15 +352,15 @@ export default function AdminDashboard() {
                       <span className="w-10 text-center text-xl">{medals[index] || `#${index + 1}`}</span>
                       <div>
                         <p className="font-semibold text-white">{team.name}</p>
-                        <p className="text-xs text-slate-400">{team.completedCheckpoints?.length || 0} checkpoints</p>
+                        <p className="text-xs text-slate-400">{completedCount}/{totalCheckpoints} checkpoints</p>
                       </div>
                     </div>
                     <p className="text-2xl font-black text-amber-300">{team.score}</p>
                   </div>
 
                   <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                    <span>Progress</span>
-                    <span>{progress}%</span>
+                    <span>Checkpoints</span>
+                    <span>{completedCount}/{totalCheckpoints}</span>
                   </div>
                   <div className="h-2.5 overflow-hidden rounded-full bg-slate-800">
                     <div
@@ -367,6 +389,25 @@ export default function AdminDashboard() {
               placeholder="Title"
               className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
             />
+            <input
+              value={checkpointForm.unlockLetter || ''}
+              onChange={(event) => setCheckpointForm({ ...checkpointForm, unlockLetter: event.target.value.replace(/[^a-z]/gi, '').slice(0, 1).toUpperCase() })}
+              placeholder="Letter from volunteer"
+              maxLength={1}
+              disabled={isFinalCheckpoint}
+              className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
+            />
+            <label className="flex items-center gap-2 rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm text-amber-100">
+              <input
+                type="checkbox"
+                checked={isFinalCheckpoint}
+                onChange={(event) => {
+                  setIsFinalCheckpoint(event.target.checked);
+                  if (event.target.checked) setCheckpointForm({ ...checkpointForm, unlockLetter: '' });
+                }}
+              />
+              Final treasure checkpoint (no letter)
+            </label>
             <div className="grid grid-cols-2 gap-3">
               <input
                 type="number"
@@ -385,6 +426,28 @@ export default function AdminDashboard() {
             </div>
             <button type="submit" disabled={creatingCp} className="md:col-span-2 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 py-3 font-bold text-slate-950 disabled:opacity-50">
               <Plus className="h-4 w-4" /> {creatingCp ? 'Saving...' : 'Save checkpoint'}
+            </button>
+          </form>
+
+          <form onSubmit={saveSettings} className="grid gap-3 rounded-3xl border border-white/10 bg-slate-900 p-5 no-print">
+            <div className="flex items-center gap-2 text-white">
+              <Shield className="h-5 w-5 text-amber-300" />
+              <h2 className="font-bold">Final treasure unlock</h2>
+            </div>
+            <input
+              value={settings.finalPassword}
+              onChange={(event) => setSettings({ ...settings, finalPassword: event.target.value })}
+              placeholder="Final password (exactly 7 words)"
+              className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
+            />
+            <textarea
+              value={settings.finalRiddle}
+              onChange={(event) => setSettings({ ...settings, finalRiddle: event.target.value })}
+              placeholder="Final riddle shown after password unlock"
+              className="min-h-24 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
+            />
+            <button type="submit" disabled={savingSettings} className="inline-flex items-center justify-center rounded-xl bg-amber-400 py-3 font-bold text-slate-950 disabled:opacity-50">
+              {savingSettings ? 'Saving...' : 'Save final unlock'}
             </button>
           </form>
 
