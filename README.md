@@ -2,7 +2,7 @@
 
 A real-time, mobile-first **campus treasure hunt** web application built for a college induction program. Teams race across campus scanning QR codes at checkpoints, collecting letters from volunteers, and competing on a live leaderboard — all from their smartphones.
 
-### 🔗 [Live App → treasurehunt-kohl.vercel.app](https://treasurehunt-kohl.vercel.app/)
+### 🔗 [Live App → treasurehunt-nielitcpsn.vercel.app](https://treasurehunt-nielitcpsn.vercel.app/)
 
 <p align="center">
   <img src="docs/campus-map.jpg" alt="Campus treasure map" width="480" />
