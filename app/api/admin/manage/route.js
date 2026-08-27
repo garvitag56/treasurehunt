@@ -62,9 +62,8 @@ export async function POST(request) {
 
     if (action === 'saveSettings') {
       const finalPassword = normalizeFinalPassword(body.finalPassword);
-      const passwordWords = finalPassword ? finalPassword.split(' ') : [];
-      if (passwordWords.length !== 7) {
-        return NextResponse.json({ error: 'Final password must contain exactly 7 words.' }, { status: 400 });
+      if (!finalPassword) {
+        return NextResponse.json({ error: 'Final password cannot be empty.' }, { status: 400 });
       }
       const settings = await GameSettings.findOneAndUpdate(
         { key: 'main' },

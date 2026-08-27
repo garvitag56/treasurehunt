@@ -437,7 +437,7 @@ export default function AdminDashboard() {
             <input
               value={settings.finalPassword}
               onChange={(event) => setSettings({ ...settings, finalPassword: event.target.value })}
-              placeholder="Final password (exactly 7 words)"
+              placeholder="Final password for teams"
               className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
             />
             <textarea

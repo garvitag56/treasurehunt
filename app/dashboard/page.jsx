@@ -219,14 +219,14 @@ export default function DashboardPage() {
           <div className="mt-3">
             <div className="flex items-center gap-2 text-amber-300">
               <Sparkles className="h-5 w-5 animate-pulse" />
-              <h2 className="text-xl font-bold text-white">Final treasure unlocked!</h2>
+              <h2 className="text-xl font-bold text-white">Quest to Final treasure unlocked!</h2>
             </div>
             <p className="mt-2 leading-7 text-slate-200">{finalRiddle}</p>
           </div>
         ) : progress.finalEligible ? (
           <div className="mt-3">
             <h2 className="text-xl font-bold text-white">Enter the final password</h2>
-            <p className="mt-2 leading-7 text-slate-200">Enter your seven-word password to reveal the final riddle.</p>
+            <p className="mt-2 leading-7 text-slate-200">Enter the password, then enter it to reveal the final riddle.</p>
             <form onSubmit={unlockFinalTreasure} className="mt-4 flex gap-2">
               <label className="sr-only" htmlFor="final-password">Final password</label>
               <input
@@ -259,7 +259,7 @@ export default function DashboardPage() {
 
       {progress.collectedLetters?.length > 0 && (
         <section className="mb-5 rounded-3xl border border-white/10 bg-white/5 p-5">
-          <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Letters from volunteers</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Letters from organisers</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {progress.collectedLetters.map((letter, index) => (
               <span key={`${letter}-${index}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-lg font-black text-slate-950">{letter}</span>
