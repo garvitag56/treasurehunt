@@ -32,29 +32,19 @@ export default function useSocket(eventName, handler, { joinLeaderboard = false,
       handlerRef.current?.(...args);
     };
 
-    function joinRooms() {
-      if (joinLeaderboard) {
-        socket.emit('join_leaderboard');
-      }
-      if (joinRoom) {
-        socket.emit('join_team_room', joinRoom);
-      }
+    if (joinLeaderboard) {
+      socket.emit('join_leaderboard');
     }
 
-    // Join on initial mount (or if already connected)
-    if (socket.connected) {
-      joinRooms();
+    if (joinRoom) {
+      socket.emit('join_team_room', joinRoom);
     }
-
-    // Re-join rooms after every reconnection
-    socket.on('connect', joinRooms);
 
     if (eventName) {
       socket.on(eventName, listener);
     }
 
     return () => {
-      socket.off('connect', joinRooms);
       if (eventName) {
         socket.off(eventName, listener);
       }
