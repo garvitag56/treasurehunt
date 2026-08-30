@@ -35,7 +35,13 @@ app.prepare().then(async () => {
   const io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
+        // Allow same-origin (no origin header) and explicitly listed origins
         if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        // Allow any *.onrender.com origin in production
+        if (origin.endsWith('.onrender.com')) {
           callback(null, true);
           return;
         }
