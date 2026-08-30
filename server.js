@@ -33,6 +33,14 @@ app.prepare().then(async () => {
 
   io.on('connection', (socket) => {
     socket.on('join_leaderboard', () => socket.join('leaderboard_room'));
+    socket.on('join_team_room', ({ teamId, accessCode } = {}) => {
+      if (teamId) {
+        socket.join(`team_${String(teamId)}`);
+      }
+      if (accessCode) {
+        socket.join(`team_${String(accessCode).toUpperCase()}`);
+      }
+    });
   });
 
   expressApp.all('*', (req, res) => handle(req, res));

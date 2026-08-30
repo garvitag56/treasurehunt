@@ -49,13 +49,16 @@ export default function DashboardPage() {
   }, [loadProgress, router]);
 
   useSocket(
-    'leaderboard_update',
-    (updatedTeam) => {
-      if (session && updatedTeam._id === session.teamId) {
+    'team_progress_update',
+    (payload) => {
+      if (!session) return;
+      if (payload?.teamId === session.teamId || payload?.accessCode === session.accessCode) {
         loadProgress(session.accessCode).catch(() => {});
       }
     },
-    { joinLeaderboard: true }
+    {
+      joinRoom: session ? { teamId: session.teamId, accessCode: session.accessCode } : null,
+    }
   );
 
   useEffect(() => {

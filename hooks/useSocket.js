@@ -14,7 +14,7 @@ function getSocket() {
   return sharedSocket;
 }
 
-export default function useSocket(eventName, handler, { joinLeaderboard = false } = {}) {
+export default function useSocket(eventName, handler, { joinLeaderboard = false, joinRoom = null } = {}) {
   const handlerRef = useRef(handler);
 
   useEffect(() => {
@@ -32,6 +32,10 @@ export default function useSocket(eventName, handler, { joinLeaderboard = false 
       socket.emit('join_leaderboard');
     }
 
+    if (joinRoom) {
+      socket.emit('join_team_room', joinRoom);
+    }
+
     if (eventName) {
       socket.on(eventName, listener);
     }
@@ -41,7 +45,7 @@ export default function useSocket(eventName, handler, { joinLeaderboard = false 
         socket.off(eventName, listener);
       }
     };
-  }, [eventName, joinLeaderboard]);
+  }, [eventName, joinLeaderboard, joinRoom?.teamId, joinRoom?.accessCode]);
 
   return getSocket();
 }

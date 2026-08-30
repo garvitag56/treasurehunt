@@ -4,6 +4,7 @@ import Team from '@/lib/models/Team';
 import Checkpoint from '@/lib/models/Checkpoint';
 import GameSettings from '@/lib/models/GameSettings';
 import { getGameConfig, normalizeFinalPassword } from '@/lib/gameConfig';
+import { emitLeaderboardUpdate } from '@/lib/progress';
 
 export async function POST(request) {
   try {
@@ -44,7 +45,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'That password is incorrect. Try again.' }, { status: 401 });
     }
 
-    await Team.updateOne({ _id: team._id }, { $set: { finalTreasureUnlocked: true } });
+    const updatedTeam = await Team.findByIdAndUpdate(
+      team._id,
+      { $set: { finalTreasureUnlocked: true } },
+      { new: true }
+    );
+
+    emitLeaderboardUpdate(updatedTeam);
 
     return NextResponse.json({ success: true, finalRiddle: settings.finalRiddle || 'Your final riddle is ready. Scan the final checkpoint when you reach it.' });
   } catch (error) {

@@ -58,17 +58,31 @@ export default function AdminDashboard() {
     'leaderboard_update',
     (updatedTeam) => {
       setTeams((current) => {
+        const merged = {
+          ...(current.find((t) => t._id === updatedTeam._id) || {}),
+          ...updatedTeam,
+          score: Number(updatedTeam.score ?? 0),
+          completedCount: Number(updatedTeam.completedCount ?? updatedTeam.completedCheckpoints?.length ?? 0),
+          totalCheckpoints: Number(updatedTeam.totalCheckpoints ?? 0),
+        };
+
         const exists = current.some((t) => t._id === updatedTeam._id);
         if (exists) {
-          return current.map((t) =>
-            t._id === updatedTeam._id ? { ...t, score: updatedTeam.score, completedCount: updatedTeam.completedCount } : t
-          );
+          return current.map((t) => (t._id === updatedTeam._id ? merged : t));
         }
-        return [...current, updatedTeam];
+        return [...current, merged];
       });
     },
     { joinLeaderboard: true }
   );
+
+  useSocket('team_progress_update', () => {
+    refresh().catch(() => {});
+  });
+
+  useSocket('leaderboard_full', (allTeams) => {
+    setTeams(allTeams || []);
+  });
 
   useEffect(() => {
     const stored = sessionStorage.getItem(TEAM_KEY);
