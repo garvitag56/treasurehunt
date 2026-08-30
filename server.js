@@ -23,7 +23,27 @@ app.prepare().then(async () => {
 
   const expressApp = express();
   const server = http.createServer(expressApp);
-  const io = new Server(server, { cors: { origin: '*' } });
+  const allowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5000',
+  ].filter(Boolean);
+
+  const io = new Server(server, {
+    cors: {
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new Error('Not allowed by CORS'));
+      },
+      credentials: true,
+    },
+  });
   global.__treasureHuntIO = io;
 
   expressApp.use((req, res, nextFn) => {
@@ -45,7 +65,7 @@ app.prepare().then(async () => {
 
   expressApp.all('*', (req, res) => handle(req, res));
 
-  server.listen(port, () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`Treasure Hunt server ready on http://localhost:${port}`);
   });
 });
